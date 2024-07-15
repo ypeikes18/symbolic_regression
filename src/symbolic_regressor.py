@@ -8,10 +8,6 @@ import numpy as np
 import random
 import heapq
 
-X = np.array(range(1,20))
-X = X.reshape(1,-1)
-
-y = np.power(X,3) + np.multiply(X,2) + 3 + np.power(X,2) * 4
 default_params = {
     "operations": [Multiply, Add],
     "num_nodes": 100,
@@ -48,8 +44,11 @@ class SymbolicRegressor:
         self.elitism = params.get("elitism") or default_params.get("elitism")
         self.num_offspring = params.get("num_offspring") or default_params.get("num_offspring")
         self.tournament_size = params.get("tournament_size") or default_params.get("tournament_size")
+        self.X = None
 
-    def fit(self, X):
+    def fit(self, X, y):
+        self.X = X
+        self.y = y
         population = self.get_initial_population(X)
         remaining_generations = self.generations - 1
         while remaining_generations > 0:
@@ -59,7 +58,7 @@ class SymbolicRegressor:
         return population
     
     def get_initial_population(self, X):
-        params = {**default_params, "X": X}
+        params = {**default_params, "X": X} # TODO fix this so it takes in the models actual params
         return [ASTNode.build_tree(**params) for _ in range(self.initial_population_size)]
 
     def perform_evolution(self, population):
@@ -86,24 +85,4 @@ class SymbolicRegressor:
         return min(competitors, key=self.get_cost)
 
     def get_cost(self, tree): # TODO this needs to get X and y normally 
-        return np.mean(abs(tree.evaluate(X)-y))
-    
-
-
-if __name__ == "__main__":
-    sr = SymbolicRegressor()
-    res = sr.fit(X)
-    sorted_trees = sr.get_trees_sorted_by_cost(res)
-
-    def get_cost(tree):
-        return np.mean(tree.evaluate(X)-y)
-    
-    # print("_"*30 + "TREE ONE" + "_"*30)
-    # print_tree(sorted_trees[0])
-    # print(get_cost(sorted_trees[0]))
-
-    # print("_"*30 + "TREE TWO" + "_"*30)
-    # print_tree(sorted_trees[25])
-    # print(get_cost(sorted_trees[25]))
-    visualize_ast(sorted_trees[0])
-    breakpoint()
+        return np.mean(abs(tree.evaluate(self.X)-self.y))
