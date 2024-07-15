@@ -3,7 +3,7 @@ from src.operations.add import Add
 from src.operations.power import Power
 
 
-from src.ast_node import ASTNode, Constant, Variable, print_tree, visualize_ast
+from src.ast_node import ASTNode, Constant, Variable, visualize_ast
 import numpy as np
 import random
 import heapq
@@ -11,11 +11,11 @@ import heapq
 X = np.array(range(1,20))
 X = X.reshape(1,-1)
 
-y = np.square(X) + 2
+y = np.power(X,3) + np.multiply(X,3) + 3
 default_params = {
     "operations": [Multiply, Add],
     "num_nodes": 100,
-    "start": 1,
+    "start": -3,
     "stop": 3,
     "step": 1,
     "max_tree_size": 100,
@@ -62,13 +62,31 @@ class SymbolicRegressor:
     
 
 
+if __name__ == "__main__":
+    sr = SymbolicRegressor()
+    population = sr.get_initial_population(X)
+    sorted_trees = sr.get_trees_sorted_by_cost(population)
+
+    def get_cost(tree):
+        return np.mean(tree.evaluate(X)-y)
+    
+    # print("_"*30 + "TREE ONE" + "_"*30)
+    # print_tree(sorted_trees[0])
+    # print(get_cost(sorted_trees[0]))
+
+    # print("_"*30 + "TREE TWO" + "_"*30)
+    # print_tree(sorted_trees[25])
+    # print(get_cost(sorted_trees[25]))
+
+    child = sorted_trees[0].swap_nodes(sorted_trees[25])
+    print("_"*30 + "CHILD TREE" + "_"*30)
+    visualize_ast(sorted_trees[1])
+    print(get_cost(child))
 
 
-
-
-
-
-sr = SymbolicRegressor()
-population = sr.get_initial_population(X)
-sortd = sr.get_trees_sorted_by_cost(population)
-breakpoint()
+# probability p that a node is a leaf
+# p**2 that the tree stops with the children of any node
+# P**2 gen 2 is the last
+# (1-p)**2 that both it's children aren't leaves
+# p**2 -(1-p)**2 that one is and one isn't
+    

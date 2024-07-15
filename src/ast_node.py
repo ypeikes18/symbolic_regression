@@ -22,17 +22,34 @@ class ASTNode:
         return result
 
     def swap_nodes(self, other):
-        # get all non leaf nodes for both trees
-        self_nodes = self.get_parent_nodes() 
-        other_nodes = other.get_parent_nodes()
+        # clone trees
+        self_copy = copy.deepcopy(self)
+        other_copy = copy.deepcopy(other)
+        print("_"*30 + "TREE ONE ORIGINAL" + "_"*30)
+        visualize_ast(self)
+
+        print("_"*30 + "TREE ONE" + "_"*30)
+        visualize_ast(self_copy)
+
+        print("_"*30 + "TREE TWO" + "_"*30)
+        visualize_ast(other_copy)
+
+        self_nodes = self_copy.get_parent_nodes() 
+        other_nodes = other_copy.get_parent_nodes()
+
         # select random node from each
         node_1 = random.choice(self_nodes)
         node_2 = random.choice(other_nodes)
-        # clone a tree
-        tree_1 = copy.deepcopy(self)
+
         # pick random index from indices in node.children
         swap_index_1 = get_random_index(node_1.children)
         swap_index_2 = get_random_index(node_2.children)
+        print("_"*30 + "SWAP OUT" + "_"*30)
+        visualize_ast(node_1.children[swap_index_1])
+        print("_"*30 + "SWAP IN" + "_"*30)
+        visualize_ast(node_2.children[swap_index_2])
+        node_1.children[swap_index_1] = node_2.children[swap_index_2]
+        return self_copy
 
 
     @classmethod
@@ -99,7 +116,7 @@ class Constant(ASTNode):
     #     return self.value == other.value
         
     def __str__(self):
-        return str(self.value)
+        return str(list(self.value))
         
     def evaluate(self, X=None):
         return self.value
@@ -132,26 +149,6 @@ class Variable(ASTNode):
         i = get_random_index(params["X"])
         print({"idx": i})
         return cls(i)
-    
-
-def print_tree(node, level=0, prefix="Root: "):
-    """
-    Prints a tree structure.
-    
-    :param node: The current node to print
-    :param level: The current level in the tree (for indentation)
-    :param prefix: A prefix to print before the node (e.g., "├── " for branches)
-    """
-    # Print the current node
-    print("    " * level + prefix + str(node))
-    
-    # Recursively print children
-    if hasattr(node, 'children'):
-        for i, child in enumerate(node.children):
-            if i == len(node.children) - 1:
-                print_tree(child, level + 1, "└── ")
-            else:
-                print_tree(child, level + 1, "├── ")
 
 from anytree import Node, RenderTree
 
@@ -164,14 +161,16 @@ def astnode_to_anytree(ast_node, parent=None):
     :return: An anytree Node representing the ASTNode
     """
     # Create a name for the node based on its type and attributes
-    if hasattr(ast_node, 'operation'):
-        name = ast_node.operation.__class__.__name__
-    elif isinstance(ast_node, Constant):
-        name = f"Constant({ast_node.value})"
-    elif isinstance(ast_node, Variable):
-        name = f"Variable(index={ast_node.index_of_value})"
-    else:
-        name = ast_node.__class__.__name__
+    if isinstance(ast_node, ASTNode):
+        if ast_node.operation:
+            name = f"{ast_node.operation.__class__.__name__} id={id(ast_node)}"
+        else:
+            if isinstance(ast_node, Constant):
+                name = f"{ast_node.__class__.__name__} id={id(ast_node)}(value={ast_node.value[0][0]})"
+            elif isinstance(ast_node, Variable):
+                name = f"{ast_node.__class__.__name__} id={id(ast_node)}(index={ast_node.index_of_value})"
+            else:
+                name = ast_node.__class__.__name__
 
     # Create the anytree Node
     tree_node = Node(name, parent=parent)
@@ -197,5 +196,14 @@ def visualize_ast(root_node):
     print("ASCII Tree Representation:")
     for pre, _, node in RenderTree(anytree_root):
         print(f"{pre}{node.name}")
+
+# Example usage:
+if __name__ == "__main__":
+    root = ASTNode(operation=None)
+    const_node = Constant(value=3.14)
+    var_node = Variable(index_of_value=1)
+    root.children = [const_node, var_node]
+    visualize_ast(root)
+
 
     
