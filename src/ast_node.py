@@ -22,33 +22,23 @@ class ASTNode:
         return result
 
     def swap_nodes(self, other):
-        # clone trees
+        # clone trees as not to screw them up in case we keep 
+        # them with elitism or something
         self_copy = copy.deepcopy(self)
         other_copy = copy.deepcopy(other)
-        print("_"*30 + "TREE ONE ORIGINAL" + "_"*30)
-        visualize_ast(self)
-
-        print("_"*30 + "TREE ONE" + "_"*30)
-        visualize_ast(self_copy)
-
-        print("_"*30 + "TREE TWO" + "_"*30)
-        visualize_ast(other_copy)
 
         self_nodes = self_copy.get_parent_nodes() 
         other_nodes = other_copy.get_parent_nodes()
 
         # select random node from each
-        node_1 = random.choice(self_nodes)
-        node_2 = random.choice(other_nodes)
+        self_node = random.choice(self_nodes)
+        other_node = random.choice(other_nodes)
 
         # pick random index from indices in node.children
-        swap_index_1 = get_random_index(node_1.children)
-        swap_index_2 = get_random_index(node_2.children)
-        print("_"*30 + "SWAP OUT" + "_"*30)
-        visualize_ast(node_1.children[swap_index_1])
-        print("_"*30 + "SWAP IN" + "_"*30)
-        visualize_ast(node_2.children[swap_index_2])
-        node_1.children[swap_index_1] = node_2.children[swap_index_2]
+        swap_index_1 = get_random_index(self_node.children)
+        swap_index_2 = get_random_index(other_node.children)
+
+        self_node.children[swap_index_1] = other_node.children[swap_index_2]
         return self_copy
 
 
@@ -102,8 +92,6 @@ class ASTNode:
         for child in self.children:
             count += child.tree_size()
         return count
-
-
     
 
 class Constant(ASTNode):
@@ -124,7 +112,6 @@ class Constant(ASTNode):
     @classmethod
     def initialize_randomly(cls, **params):
         value = get_random_float(params["start"], params["stop"], params["step"])
-        print({"value": value})
         vector =  np.full(params["X"].shape,fill_value=value)
         return cls(vector)
     
@@ -147,7 +134,6 @@ class Variable(ASTNode):
     @classmethod
     def initialize_randomly(cls, **params):
         i = get_random_index(params["X"])
-        print({"idx": i})
         return cls(i)
 
 from anytree import Node, RenderTree
