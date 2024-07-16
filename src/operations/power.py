@@ -8,31 +8,13 @@ class Power:
         self.num_args = 2
 
     def forward(self, a, b):
-        self.a = a
-        self.b = b
-        
-        # Compute log(abs(a)) * b element-wise
-        with np.errstate(divide='ignore', invalid='ignore'):
-            log_result = np.abs(a).astype(np.float64)
-            np.log(log_result, out=log_result)
-            log_result *= b
-
-        # Create a mask for where overflow would occur
-        overflow_mask = log_result > np.log(np.finfo(np.float64).max)
-        
-        # Compute the result using np.power
-        with np.errstate(over='ignore', under='ignore'):
+        a = np.array(a)
+        b = np.array(b)
+        try:
             result = np.power(a, b)
-        
-        # Where overflow occurred, replace with max float64 value (preserving sign)
-        max_val = np.finfo(np.float64).max
-        result = np.where(overflow_mask, np.sign(a) * max_val, result)
-        
-        # Handle special cases
-        result = np.where(np.isnan(result), np.sign(a) * max_val, result)
-        result = np.where(np.isinf(result), np.sign(result) * max_val, result)
-        
-        return np.clip(result,1,100)
+        except:
+            result =  1 / np.power(a, np.abs(b))
+        return np.clip(result,1,100) # TODO unharcode
 
     def backward(self):
         return [self.get_derivative_wrt_base(), self.get_derivative_wrt_exponent()]

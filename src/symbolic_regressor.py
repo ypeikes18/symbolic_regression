@@ -9,11 +9,11 @@ import random
 import heapq
 
 default_params = {
-    "operations": [Multiply, Add],
+    "operations": [Multiply, Add, Power],
     "num_nodes": 100,
     "start": -3,
     "stop": 3,
-    "step": 1,
+    "step": 0.1,
     "max_tree_size": 100,
     "num_generations": 50,
     "num_offspring": 300,
