@@ -14,7 +14,7 @@ class Power:
             result = np.power(a, b)
         except:
             result =  1 / np.power(a, np.abs(b))
-        return np.clip(result,1,100) # TODO unharcode
+        return np.clip(result,1,4611686018427387904) # TODO unharcode
 
     def backward(self):
         return [self.get_derivative_wrt_base(), self.get_derivative_wrt_exponent()]
@@ -24,4 +24,3 @@ class Power:
     
     def get_derivative_wrt_exponent(self):
         return np.log(self.b) * self.b**self.a
-

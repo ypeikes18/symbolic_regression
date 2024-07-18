@@ -1,6 +1,6 @@
 import numpy as np
 
-class Add:
+class Divide:
 
     def __init__(self):
         self.a = None
@@ -10,7 +10,7 @@ class Add:
     def forward(self, a, b):
         self.a = a
         self.b = b
-        return a + b
-
+        return np.divide(a,b)
+    
     def backward(self):
-        return np.array([np.ones_like(self.a), np.ones_like(self.b)])
+        pass # TODO

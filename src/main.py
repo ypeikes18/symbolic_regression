@@ -1,21 +1,32 @@
 import numpy as np
 from src.symbolic_regressor import SymbolicRegressor, visualize_ast
 
-def get_multivariate_synthetic_data(num_samples):
-    var_1 = np.random.uniform(0.01, 10, num_samples)
-    var_2 = np.random.uniform(0.1, 10, num_samples)
+num_samples = 100
+x0_range = (1, 100)
+x1_range = (1, 100)
+x2_range = (1, 100)  # Avoid zero to prevent division by zero
 
-    X = np.vstack((var_1, var_2))
-    return X
-
-X = get_multivariate_synthetic_data(10)
-y = np.array([col[0]**3 + col[1] for col in X.T])
+# Generate random values for x0, x1, and x2
+x0 = np.arange(num_samples)
+x1 = np.random.uniform(x1_range[0], x1_range[1], num_samples)
+x2 = np.random.uniform(x2_range[0], x2_range[1], num_samples)
+X = np.vstack((x0,x1))
+# Compute the target values using the expression
+y = (x0 * x1)/5
 
 if __name__ == "__main__":
-    sr = SymbolicRegressor()
-    res = sr.fit(X,y)
-    sorted_trees = sr.get_trees_sorted_by_cost(res)
+    import multiprocessing as mp
+    def run(i):
+        sr = SymbolicRegressor()
+        res = sr.fit(X,y)
+        sorted_trees = sr.get_trees_sorted_by_cost(res)
+        return sorted_trees[0], sr.costs
 
-    visualize_ast(sorted_trees[0])
-    print(sorted_trees[0].evaluate(X) - y)
+    with mp.Pool(processes=4) as pool:
+        results = pool.map(run, range(4))
+
+
+    for tree, costs in results:
+        visualize_ast(tree)
+        print(costs)
     breakpoint()

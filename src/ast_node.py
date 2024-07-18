@@ -13,22 +13,28 @@ class ASTNode:
         self.children = children
         self.operation = operation
         self.level = level
+        self.evaluated_value = None
 
     def __str__(self):
         return str(self.operation)
 
     def evaluate(self, X) -> float:
+        if self.evaluated_value is not None:
+            return self.evaluated_value
         result = self.operation.forward(*[child.evaluate(X) for child in self.children])
+        self.evaluated_value = result
         return result
 
     def swap_nodes(self, other):
         # clone trees as not to screw them up in case we keep 
         # them with elitism or something
         self_copy = copy.deepcopy(self)
+        self_copy.evaluated_value = None
         other_copy = copy.deepcopy(other)
+        other_copy.evaluated_value = None
 
-        self_nodes = self_copy.get_parent_nodes() 
-        other_nodes = other_copy.get_parent_nodes()
+        self_nodes = self_copy.get_nodes() 
+        other_nodes = other_copy.get_nodes()
 
         # select random node from each
         self_node = random.choice(self_nodes)
@@ -74,16 +80,25 @@ class ASTNode:
                     num_allowed_nodes-=1
         return root
         
-    def get_parent_nodes(self) -> list:
+    def get_nodes(self,include_leaves=False) -> list:
         nodes = []
         stack = [self]
         while len(stack) > 0:
             node = stack.pop()
-            if node.children:
+            if node.children or include_leaves:
                 nodes.append(node)
                 for child in node.children:
                     stack.append(child)
         return nodes
+    
+    # TODO this might be able to replace all the dfs traversals
+    def dfs_with_function(self, func):
+        if not self.children:
+            return [func(self)]
+        res = [func(self)]
+        for child in self.children:
+            res.extend(child.dfs_with_function(func))
+        return res   
     
     def tree_size(self):
         if not self.children:
@@ -93,6 +108,20 @@ class ASTNode:
             count += child.tree_size()
         return count
     
+    def __iter__(self):
+        self.stack = [self]
+        return self
+    
+    def __next__(self):
+        if not self.stack:
+            raise StopIteration
+        current_node = self.stack.pop()
+        self.stack.extend(reversed(current_node.children))
+        return current_node
+    
+    def change_value(self, **params):
+        operation_class = random.choice(params['operations'])
+        self.operation = operation_class()
 
 class Constant(ASTNode):
 
@@ -114,6 +143,11 @@ class Constant(ASTNode):
         value = get_random_float(params["start"], params["stop"], params["step"])
         vector =  np.full(params["X"].shape,fill_value=value)
         return cls(vector)
+
+    def change_value(self, **params):
+        value = get_random_float(params["start"], params["stop"], params["step"])
+        vector =  np.full(params["X"].shape,fill_value=value)
+        self.value = vector
     
 
 class Variable(ASTNode):
@@ -135,6 +169,10 @@ class Variable(ASTNode):
     def initialize_randomly(cls, **params):
         i = get_random_index(params["X"])
         return cls(i)
+    
+    def change_value(self, **params):
+        i = get_random_index(params["X"])
+        self.index_of_value = i
 
 from anytree import Node, RenderTree
 
@@ -168,7 +206,6 @@ def astnode_to_anytree(ast_node, parent=None):
 
     return tree_node
 
-# Function to visualize the tree
 def visualize_ast(root_node):
     """
     Visualize an AST using anytree.
@@ -183,7 +220,6 @@ def visualize_ast(root_node):
     for pre, _, node in RenderTree(anytree_root):
         print(f"{pre}{node.name}")
 
-# Example usage:
 if __name__ == "__main__":
     root = ASTNode(operation=None)
     const_node = Constant(value=3.14)
