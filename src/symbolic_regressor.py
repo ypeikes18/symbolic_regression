@@ -8,6 +8,7 @@ from src.ast_node import ASTNode, Constant, Variable
 import numpy as np
 import random
 import heapq
+import multiprocessing as mp
 
 default_params = {
     "operations": [Multiply, Add, Power, Divide],
@@ -53,8 +54,22 @@ class SymbolicRegressor:
         self.X = None
         self.costs = []
 
+    def run(self, i, X, y):
+        sr = SymbolicRegressor(**{k: v for k, v in vars(self).items() if not callable(v)})
+        res = sr._fit(X, y)
+        sorted_trees = sr.get_trees_sorted_by_cost(res)
+        return sorted_trees
 
     def fit(self, X, y):
+        with mp.Pool(processes=self.num_processes) as pool:
+            results = pool.starmap(self.run, [(i, X, y) for i in range(4)])
+
+        self.X = X  # needed to calculate cost
+        self.y = y  # needed to calculate cost
+        return self.get_trees_sorted_by_cost([individual for population in results for individual in population])
+
+
+    def _fit(self, X, y):
         self.X = X
         self.y = y
         population = self.get_initial_population(X)
