@@ -16,7 +16,7 @@ def get_gravity_variables(*,num_samples):
 
 def compute_gravitational_force(X):
     G = const.G
-    mass_one = X[0, :]  
-    mass_two = X[1, :]  
-    distance = X[2, :]  
+    mass_one = X[0, :]
+    mass_two = X[1, :]
+    distance = X[2, :]
     return G * mass_one * mass_two / distance**2

@@ -68,7 +68,6 @@ class SymbolicRegressor:
         self.y = y  # needed to calculate cost
         return self.get_trees_sorted_by_cost([individual for population in results for individual in population])
 
-
     def _fit(self, X, y):
         self.X = X
         self.y = y
@@ -83,7 +82,6 @@ class SymbolicRegressor:
             print(f"lowest cost: {lowest_cost}")
             remaining_generations -=1
         return population
-
 
     def get_initial_population(self, X):
         params = {**default_params, "X": X} # TODO fix this so it takes in the models actual params
