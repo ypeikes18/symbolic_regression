@@ -11,6 +11,9 @@ class Multiply:
         self.a = a
         self.b = b
         return np.multiply(a,b)
-    
+
     def backward(self):
         return [self.b, self.a]
+
+    def __str__(self):
+        return self.__class__.__name__

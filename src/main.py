@@ -1,10 +1,12 @@
 import numpy as np
-from src.symbolic_regressor import SymbolicRegressor, visualize_ast
+from src.symbolic_regressor import SymbolicRegressor
+import multiprocessing as mp
+from src.utils.md_utils import create_md_tree
 
 num_samples = 100
 x0_range = (1, 100)
 x1_range = (1, 100)
-x2_range = (1, 100)  # Avoid zero to prevent division by zero
+x2_range = (1, 100)  # Avoid zero to prevent division by zero # TODO fix that
 
 # Generate random values for x0, x1, and x2
 x0 = np.arange(num_samples)
@@ -15,18 +17,10 @@ X = np.vstack((x0,x1))
 y = (x0 * x1)/5
 
 if __name__ == "__main__":
-    import multiprocessing as mp
-    def run(i):
-        sr = SymbolicRegressor()
-        res = sr.fit(X,y)
-        sorted_trees = sr.get_trees_sorted_by_cost(res)
-        return sorted_trees[0], sr.costs
+    sr = SymbolicRegressor(num_processes=4)
+    res = sr.fit(X,y)
 
-    with mp.Pool(processes=4) as pool:
-        results = pool.map(run, range(4))
-
-
-    for tree, costs in results:
-        visualize_ast(tree)
-        print(costs)
     breakpoint()
+
+
+    create_md_tree(res[0])

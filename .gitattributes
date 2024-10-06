@@ -1,0 +1,5 @@
+# Handle all text files
+* text=auto
+
+# Ignore line-ending warnings for the virtual environment folder
+venv/* text eol=lf

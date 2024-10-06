@@ -4,7 +4,7 @@ from src.operations.power import Power
 from src.operations.divide import Divide
 
 
-from src.ast_node import ASTNode, Constant, Variable, visualize_ast
+from src.ast_node import ASTNode, Constant, Variable
 import numpy as np
 import random
 import heapq
@@ -26,6 +26,7 @@ default_params = {
     "elitism":100,
     "num_mediocre_survivors":0,
     "node_count_penalty_coefficient": 0.1,
+    "num_processes": 1
 }
 
 class SymbolicRegressor:
@@ -48,10 +49,12 @@ class SymbolicRegressor:
         self.tournament_size = params.get("tournament_size") or default_params.get("tournament_size")
         self.num_mediocre_survivors = params.get("num_mediocre_survivors") or default_params.get("num_mediocre_survivors")
         self.node_count_penalty_coefficient = params.get("node_count_penalty_coefficient") or default_params.get("node_count_penalty_coefficient")
+        self.num_processes = params.get("num_processes") or default_params.get("num_processes")
         self.X = None
         self.costs = []
 
-    def fit(self, X, y, num_processes=1):
+
+    def fit(self, X, y):
         self.X = X
         self.y = y
         population = self.get_initial_population(X)
@@ -66,6 +69,7 @@ class SymbolicRegressor:
             remaining_generations -=1
         return population
 
+
     def get_initial_population(self, X):
         params = {**default_params, "X": X} # TODO fix this so it takes in the models actual params
         return [ASTNode.build_tree(**params) for _ in range(self.initial_population_size)]
@@ -76,17 +80,17 @@ class SymbolicRegressor:
     def get_trees_sorted_by_cost(self, trees):
         # TODO maybe modify to only use top n and with a heap or generate by cost in the first place
         return sorted(trees, key=self.get_cost)
-    
+
     def get_survivors(self, population):
         sorted_population = self.get_trees_sorted_by_cost(population)
         return self.get_elites(sorted_population) + self.get_mediocre_survivors(sorted_population)
 
     def get_elites(self, sorted_population):
-        return sorted_population[:self.elitism]   
+        return sorted_population[:self.elitism]
 
-    def get_mediocre_survivors(self, sorted_population): 
+    def get_mediocre_survivors(self, sorted_population):
         return random.sample(sorted_population[self.elitism:], self.num_mediocre_survivors)
-    
+
     def get_all_offspring(self, population):
         offspring = []
         for _ in range(self.num_offspring):
@@ -100,18 +104,18 @@ class SymbolicRegressor:
     def select_parent(self, population):
         competitors = random.sample(population, self.tournament_size)
         return min(competitors, key=self.get_cost)
-    
+
     def mutate(self, node):
         self.point_wise_mutate(node)
-    
+
     def point_wise_mutate(self, tree):
         for node in tree:
             if random.random() <= self.mutation_rate:
                 node.change_value(**{**default_params, "X": self.X}) # TODO fix this so it takes in the models actual params
 
-    def get_cost(self, tree): 
+    def get_cost(self, tree):
         def num_levels(root):
-            if not root.children: 
+            if not root.children:
                 return 1
             return 1 + max([num_levels(child) for child in root.children])
         costs = np.power(tree.evaluate(self.X)-self.y,2) + num_levels(tree)*self.node_count_penalty_coefficient

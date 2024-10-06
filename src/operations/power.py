@@ -18,9 +18,12 @@ class Power:
 
     def backward(self):
         return [self.get_derivative_wrt_base(), self.get_derivative_wrt_exponent()]
-    
+
     def get_derivative_wrt_base(self):
         return self.b*self.a**(self.b-1)
-    
+
     def get_derivative_wrt_exponent(self):
         return np.log(self.b) * self.b**self.a
+
+    def __str__(self):
+        return self.__class__.__name__

@@ -11,6 +11,9 @@ class Divide:
         self.a = a
         self.b = b
         return np.divide(a,b)
-    
+
     def backward(self):
         pass # TODO
+
+    def __str__(self):
+        return self.__class__.__name__

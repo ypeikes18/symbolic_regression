@@ -10,6 +10,9 @@ class Cosine:
     def forward(self, a):
         self.a = a
         return np.cos(a)
-    
+
     def backward(self):
         return [self.b, self.a]
+
+    def __str__(self):
+        return self.__class__.__name__

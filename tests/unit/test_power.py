@@ -14,5 +14,4 @@ def test_forward():
 
     b = np.array([200,200,200])
     # WHEN results aren't clipped
-    breakpoint()
     assert np.array_equal(Power().forward(a,b), np.array([1.0,100.0,100.0]))
