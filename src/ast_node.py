@@ -20,8 +20,6 @@ class ASTNode:
 
 
     def evaluate(self, X) -> float:
-        if self.evaluated_value is not None:
-            return self.evaluated_value
         result = self.operation.forward(*[child.evaluate(X) for child in self.children])
         self.evaluated_value = result
         return result

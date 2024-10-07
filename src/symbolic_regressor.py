@@ -10,18 +10,22 @@ import random
 import heapq
 import multiprocessing as mp
 
+def default_get_mutation_rate(i):
+    # return 0.35 - i/200
+    return 0.25
+
 default_params = {
-    "operations": [Multiply, Add, Power, Divide],
+    "operations": [Multiply, Add, Divide],
     "num_nodes": 100,
     "start": 1,
     "stop": 6,
     "step":1,
     "max_tree_size": 100,
-    "num_generations": 15,
+    "num_generations": 50,
     "num_offspring": 400,
     "initial_population_size": 500,
     "crossover_rate": 0.8, # TODO some of these really need to be functions so they can be more dynamic
-    "mutation_rate": 0.25,
+    "mutation_rate": default_get_mutation_rate,
     "mutation_types": ['point', 'subtree', 'shrink', 'expand'],
     "tournament_size": 4,
     "elitism":100,
@@ -29,6 +33,7 @@ default_params = {
     "node_count_penalty_coefficient": 0.1,
     "num_processes": 1
 }
+
 
 class SymbolicRegressor:
 
@@ -53,6 +58,7 @@ class SymbolicRegressor:
         self.num_processes = params.get("num_processes") or default_params.get("num_processes")
         self.X = None
         self.costs = []
+        self.iteration = 0
 
     def run(self, i, X, y):
         sr = SymbolicRegressor(**{k: v for k, v in vars(self).items() if not callable(v)})
@@ -62,7 +68,7 @@ class SymbolicRegressor:
 
     def fit(self, X, y):
         with mp.Pool(processes=self.num_processes) as pool:
-            results = pool.starmap(self.run, [(i, X, y) for i in range(4)])
+            results = pool.starmap(self.run, [(i, X, y) for i in range(self.num_processes)])
 
         self.X = X  # needed to calculate cost
         self.y = y  # needed to calculate cost
@@ -72,15 +78,15 @@ class SymbolicRegressor:
         self.X = X
         self.y = y
         population = self.get_initial_population(X)
-        remaining_generations = self.num_generations - 1
-        while remaining_generations > 0:
-            print(f"Generations remaining: {remaining_generations}")
+        self.iteration = 1
+        while self.iteration <= self.num_generations:
+            print(f"Generations remaining: {self.num_generations-self.iteration}")
             population = self.get_next_generation(population)
             best_tree = self.get_trees_sorted_by_cost(population)[0]
             lowest_cost = self.get_cost(best_tree)
             self.costs.append(lowest_cost)
             print(f"lowest cost: {lowest_cost}")
-            remaining_generations -=1
+            self.iteration +=1
         return population
 
     def get_initial_population(self, X):
@@ -123,8 +129,11 @@ class SymbolicRegressor:
 
     def point_wise_mutate(self, tree):
         for node in tree:
-            if random.random() <= self.mutation_rate:
+            if random.random() <= self.get_mutation_rate():
                 node.change_value(**{**default_params, "X": self.X}) # TODO fix this so it takes in the models actual params
+
+    def get_mutation_rate(self):
+        return self.mutation_rate(self.iteration)
 
     def get_cost(self, tree):
         def num_levels(root):
@@ -133,5 +142,3 @@ class SymbolicRegressor:
             return 1 + max([num_levels(child) for child in root.children])
         costs = np.power(tree.evaluate(self.X)-self.y,2) + num_levels(tree)*self.node_count_penalty_coefficient
         return np.mean(costs)
-
-
